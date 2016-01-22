@@ -7,15 +7,27 @@
 //
 
 import UIKit
+import CoreLocation
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, CLLocationManagerDelegate {
 
     var window: UIWindow?
+    var lm: CLLocationManager!
 
+    var timer: NSTimer!
+
+    let targetLocation = TargetLocation(latitude: NSUserDefaults.standardUserDefaults().doubleForKey("targetLatitudeKey"),
+        longitude: NSUserDefaults.standardUserDefaults().doubleForKey("targetLongitudeKey"))
+
+    let currentLocation = CurrentLocation(latitude: 0.0, longitude: 0.0)
+
+    let myConfig:NSURLSessionConfiguration = NSURLSessionConfiguration.backgroundSessionConfigurationWithIdentifier("backgroundTask")
+    var mySession:NSURLSession? = nil
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
+
         return true
     }
 
@@ -41,6 +53,60 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
+    func locationManager(manager: CLLocationManager, didUpdateToLocation newLocation: CLLocation, fromLocation oldLocation: CLLocation){
 
+        currentLocation.latitude = newLocation.coordinate.latitude
+        currentLocation.longitude = newLocation.coordinate.longitude
+
+        if PublicFunctions().locationToMeter(currentLocation.latitude, latitude2: targetLocation.latitude, longitude1: currentLocation.longitude, longitude2: targetLocation.longitude) > 200 {
+            return
+        }
+
+        let log = PublicFunctions().formatLocationLog(currentLocation.latitude, longitude: currentLocation.longitude)
+        NSLog(log)
+
+        postData("http://localhost:8124/", user: "TESTUSER", latitude: currentLocation.latitude, longitude: currentLocation.longitude)
+
+        lm.stopUpdatingLocation()
+        lm  = nil
+    }
+
+    func locationManager(manager: CLLocationManager, didFailWithError error: NSError) {
+
+        NSLog("位置情報の取得に失敗しました。")
+
+        lm.stopUpdatingLocation()
+        lm  = nil
+    }
+
+    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
+        switch status {
+        case .NotDetermined:
+            if lm.respondsToSelector("requestWhenInUseAuthorization") { lm.requestWhenInUseAuthorization() }
+        case .Restricted, .Denied:
+            break
+        case .Authorized, .AuthorizedWhenInUse:
+            break
+        }
+    }
+
+    func postData(hostAddress : String, user : String, latitude : Double, longitude : Double) {
+
+        if mySession == nil {
+            mySession = NSURLSession(configuration: myConfig)
+        }
+
+        let myUrl:NSURL = NSURL(string: hostAddress)!
+
+        let myRequest:NSMutableURLRequest = NSMutableURLRequest(URL: myUrl)
+        myRequest.HTTPMethod = "POST"
+
+        let str:NSString = "{ \"user\" : \" \(user) \", \"latitude\": \(latitude) , \"longitude\": \(longitude) }"
+        let myData:NSData = str.dataUsingEncoding(NSUTF8StringEncoding)!
+        myRequest.HTTPBody = myData
+
+        let myTask:NSURLSessionDataTask = mySession!.dataTaskWithRequest(myRequest)
+        myTask.resume()
+    }
 }
 

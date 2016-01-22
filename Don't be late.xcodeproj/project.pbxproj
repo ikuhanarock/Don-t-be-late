@@ -14,6 +14,8 @@
 		D6641B2D1C51D9C000BE2DCD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D6641B2B1C51D9C000BE2DCD /* LaunchScreen.storyboard */; };
 		D6641B381C51D9C000BE2DCD /* Don_t_be_lateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6641B371C51D9C000BE2DCD /* Don_t_be_lateTests.swift */; };
 		D6641B431C51D9C000BE2DCD /* Don_t_be_lateUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6641B421C51D9C000BE2DCD /* Don_t_be_lateUITests.swift */; };
+		D6641B511C51DB8200BE2DCD /* File.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6641B501C51DB8200BE2DCD /* File.swift */; };
+		D6641B531C51DC1400BE2DCD /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6641B521C51DC1400BE2DCD /* SettingsViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +49,8 @@
 		D6641B3E1C51D9C000BE2DCD /* Don't be lateUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Don't be lateUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6641B421C51D9C000BE2DCD /* Don_t_be_lateUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Don_t_be_lateUITests.swift; sourceTree = "<group>"; };
 		D6641B441C51D9C000BE2DCD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D6641B501C51DB8200BE2DCD /* File.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = File.swift; sourceTree = "<group>"; };
+		D6641B521C51DC1400BE2DCD /* SettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,10 +103,12 @@
 			children = (
 				D6641B221C51D9C000BE2DCD /* AppDelegate.swift */,
 				D6641B241C51D9C000BE2DCD /* ViewController.swift */,
+				D6641B521C51DC1400BE2DCD /* SettingsViewController.swift */,
 				D6641B261C51D9C000BE2DCD /* Main.storyboard */,
 				D6641B291C51D9C000BE2DCD /* Assets.xcassets */,
 				D6641B2B1C51D9C000BE2DCD /* LaunchScreen.storyboard */,
 				D6641B2E1C51D9C000BE2DCD /* Info.plist */,
+				D6641B501C51DB8200BE2DCD /* File.swift */,
 			);
 			path = "Don't be late";
 			sourceTree = "<group>";
@@ -260,7 +266,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				D6641B251C51D9C000BE2DCD /* ViewController.swift in Sources */,
+				D6641B511C51DB8200BE2DCD /* File.swift in Sources */,
 				D6641B231C51D9C000BE2DCD /* AppDelegate.swift in Sources */,
+				D6641B531C51DC1400BE2DCD /* SettingsViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
