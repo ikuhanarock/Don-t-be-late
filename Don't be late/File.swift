@@ -43,8 +43,9 @@ class TargetLocation : Location {
 
 }
 
-class PublicFunctions {
+class Utils {
 
+    /// ログ出力フォーマットに変換する。
     func formatLocationLog(latitude: CLLocationDegrees!, longitude: CLLocationDegrees!)-> String {
 
         let now = NSDate()
@@ -62,6 +63,7 @@ class PublicFunctions {
         }
     }
 
+    /// CLLocationDegress から Meter に変換する。
     func locationToMeter(latitude1: CLLocationDegrees, latitude2: CLLocationDegrees?, longitude1: CLLocationDegrees, longitude2: CLLocationDegrees?)-> uint {
 
         let latitude3 = latitude2 ?? 0.0
@@ -72,4 +74,21 @@ class PublicFunctions {
         let meter = sqrt(meter1 + meter2) * 1000
         return UInt32(meter)
     }
+
+    /// AutoLayout を設定する。
+    func GenerateAutoLayoutString(objecName: String, pxWidth: Int? = nil, pxHeight: Int? = nil, pxTop: Int? = nil, pxRight: Int? = nil, pxBottom: Int? = nil, pxLeft: Int? = nil) -> (String, String) {
+
+        let topStr: String = pxTop != nil ? "-\(pxTop!)-" : "-"
+        let rightStr: String = pxRight != nil ? "-\(pxRight!)-" : "-"
+        let bottomStr: String = pxBottom != nil ? "-\(pxBottom!)-" : "-"
+        let leftStr: String = pxLeft != nil ?  "-\(pxLeft!)-" : "-"
+        let heightStr: String = pxHeight != nil ?  "(\(pxHeight!))" : ""
+        let widthStr: String = pxWidth != nil ?  "(\(pxWidth!))" : ""
+
+        let VautoLayoutStr: String = "V:|" + topStr + "[" + objecName + heightStr + "]" + bottomStr + "|"
+        let HautoLayoutStr: String = "H:|" + leftStr + "[" + objecName + widthStr + "]" + rightStr + "|"
+
+        return (VautoLayoutStr, HautoLayoutStr)
+    }
+
 }

@@ -18,14 +18,22 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
 
     var lm: CLLocationManager!
 
-    let appDelegate: AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+    let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
 
     var infoBtn: UIButton!
     var getLocationBtn: UIButton!
+    let getLocationBtnText = "Get"
+    var workStartTimeDatePicker: UIDatePicker!
     var viewsDictionary = [String: AnyObject]()
 
-    var mapView: MKMapView = MKMapView()
-    var longtapGesture: UILongPressGestureRecognizer = UILongPressGestureRecognizer()
+    var mapView = MKMapView()
+    var longtapGesture = UILongPressGestureRecognizer()
+
+    // 現場開始時間設定
+    var effectView: UIVisualEffectView!
+    var messageLabel: UILabel!
+    var submitBtn: UIButton!
+    let submitBtnText = "設定"
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,11 +47,12 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         let mapPoint:CLLocationCoordinate2D = CLLocationCoordinate2DMake(appDelegate.targetLocation.latitude,appDelegate.targetLocation.longitude)
         dropPin(mapPoint)
 
-        self.longtapGesture.addTarget(self, action: "longPressed:")
+        // 画面長押し時のイベント購読開始
+        self.longtapGesture.addTarget(self, action: #selector(ViewController.longPressed(_:)))
         self.mapView.addGestureRecognizer(self.longtapGesture)
     }
 
-    /* 画面の初期化 */
+    /// 画面の初期化
     func initView() -> Void {
 
         // マップ 生成
@@ -53,16 +62,28 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
 
         // Infoボタン 生成
         infoBtn = UIButton(type: UIButtonType.InfoDark)
-        infoBtn.addTarget(self, action: "onClickInfo", forControlEvents: UIControlEvents.TouchUpInside)
+        infoBtn.addTarget(self, action: #selector(ViewController.onClickInfo), forControlEvents: UIControlEvents.TouchUpInside)
 
         infoBtn.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(infoBtn)
-        viewsDictionary["infoBtn_layout"] = infoBtn
-        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-[infoBtn_layout(20)]-20-|",
+        let infoBtnKey = "infoBtn_layout"
+        var vLayoutStr: String
+        var hLayoutStr: String
+        (vLayoutStr, hLayoutStr) =
+            Utils().GenerateAutoLayoutString(
+                infoBtnKey,
+                pxWidth: 20,
+                pxHeight: 20,
+                pxTop: 30,
+                pxRight: 20)
+        viewsDictionary[infoBtnKey] = infoBtn
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            hLayoutStr,
             options: NSLayoutFormatOptions(rawValue: 0),
             metrics: nil,
             views: viewsDictionary))
-        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|-30-[infoBtn_layout(20)]-|",
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            vLayoutStr,
             options: NSLayoutFormatOptions(rawValue: 0),
             metrics: nil,
             views: viewsDictionary))
@@ -72,18 +93,28 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         getLocationBtn = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
         getLocationBtn.backgroundColor = UIColor.orangeColor()
         getLocationBtn.layer.masksToBounds = true
-        getLocationBtn.setTitle("Get", forState: .Normal)
+        getLocationBtn.setTitle(getLocationBtnText, forState: .Normal)
         getLocationBtn.layer.cornerRadius = 25.0
-        getLocationBtn.addTarget(self, action: "onClickGetCurrentLocation:", forControlEvents: .TouchUpInside)
+        getLocationBtn.addTarget(self, action: #selector(ViewController.onClickGetCurrentLocation(_:)), forControlEvents: .TouchUpInside)
 
         getLocationBtn.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(getLocationBtn)
-        viewsDictionary["getBtn_layout"] = getLocationBtn
-        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-20-[getBtn_layout(50)]-|",
+        let getBtnKey = "getBtn_layout"
+        (vLayoutStr, hLayoutStr) =
+            Utils().GenerateAutoLayoutString(
+                getBtnKey,
+                pxWidth: 50,
+                pxHeight: 50,
+                pxBottom: 20,
+                pxLeft: 20)
+        viewsDictionary[getBtnKey] = getLocationBtn
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            hLayoutStr,
             options: NSLayoutFormatOptions(rawValue: 0),
             metrics: nil,
             views: viewsDictionary))
-        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|-[getBtn_layout(50)]-20-|",
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            vLayoutStr,
             options: NSLayoutFormatOptions(rawValue: 0),
             metrics: nil,
             views: viewsDictionary))
@@ -96,15 +127,16 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     }
 
     override func viewDidAppear(animated: Bool) {
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "onOrientationChange:", name: UIDeviceOrientationDidChangeNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(ViewController.onOrientationChange(_:)), name: UIDeviceOrientationDidChangeNotification, object: nil)
     }
 
-    /* 端末の向きがかわったら呼び出される */
+    /// 端末の向きがかわったら呼び出される
     func onOrientationChange(notification: NSNotification){
+        // 再描画
         initView()
     }
 
-    /* Infoボタン押下で呼び出される */
+    /// Infoボタン押下で呼び出される
     func onClickInfo() {
         let rootViewViewController = SettingsViewController()
         rootViewViewController.delegate = self
@@ -112,7 +144,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         self.presentViewController(second, animated: true, completion: nil)
     }
 
-    /* Getボタン押下で呼び出される */
+    /// Getボタン押下で呼び出される
     func onClickGetCurrentLocation(sender: UIButton){
 
         if self.lm == nil {
@@ -132,7 +164,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         self.lm.startUpdatingLocation()
     }
 
-    /* 画面長押し時に呼び出される */
+    /// 画面長押し時に呼び出される
     func longPressed(sender: UILongPressGestureRecognizer){
 
         // 指を離したときだけ反応するようにする
@@ -143,61 +175,203 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         let location = sender.locationInView(self.mapView)
         let mapPoint:CLLocationCoordinate2D = self.mapView.convertPoint(location, toCoordinateFromView: self.mapView)
 
-        // アラート表示でokなら、ピンをドロップする
-        let alertController = UIAlertController(title: "現場の変更", message: "現場を変更してもよろしいでしょうか？", preferredStyle: .Alert)
-        let otherAction = UIAlertAction(title: "OK", style: .Default) {
-            action in self.dropPin(mapPoint)
-        }
-        let cancelAction = UIAlertAction(title: "CANCEL", style: .Cancel) {
-            action in return
-        }
-
-        alertController.addAction(otherAction)
-        alertController.addAction(cancelAction)
-        presentViewController(alertController, animated: true, completion: nil)
-
+        self.changeWorkplace(mapPoint)
     }
 
-    /* 地図にピンを配置する */
+    /// 現場変更処理
+    func changeWorkplace(mapPoint: CLLocationCoordinate2D) {
+
+        // 現場の開始時間の入力を促す。
+        self.displayWorkStartTime()
+
+        // ピンをドロップする。
+        self.dropPin(mapPoint)
+    }
+
+    /// 現場の開始時間の入力を促す。
+    func displayWorkStartTime() {
+
+        // Blur生成
+        effectView = UIVisualEffectView(effect: UIBlurEffect(style: UIBlurEffectStyle.Light))
+        effectView.layer.masksToBounds = true
+
+        effectView.translatesAutoresizingMaskIntoConstraints = false
+        self.view.addSubview(effectView)
+        let effectViewKey = "getEffect_layout"
+        var vLayoutStr: String
+        var hLayoutStr: String
+        (vLayoutStr, hLayoutStr) =
+            Utils().GenerateAutoLayoutString(
+                effectViewKey,
+                pxTop:0,
+                pxRight:0,
+                pxBottom:0,
+                pxLeft:0)
+        viewsDictionary[effectViewKey] = effectView
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            hLayoutStr,
+            options: NSLayoutFormatOptions(rawValue: 0),
+            metrics: nil,
+            views: viewsDictionary))
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            vLayoutStr,
+            options: NSLayoutFormatOptions(rawValue: 0),
+            metrics: nil,
+            views: viewsDictionary))
+        view.addSubview(effectView)
+
+        // メッセージラベル生成
+        messageLabel = UILabel()
+        messageLabel.text = "現場の開始時間を設定してください。"
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        self.view.addSubview(messageLabel)
+        let messageLabelKey = "messageLabel_layout"
+        (vLayoutStr, hLayoutStr) =
+            Utils().GenerateAutoLayoutString(
+                messageLabelKey,
+                pxHeight: 50,
+                pxTop: 100,
+                pxRight: 30,
+                pxLeft: 30)
+        viewsDictionary[messageLabelKey] = messageLabel
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            hLayoutStr,
+            options: NSLayoutFormatOptions(rawValue: 0),
+            metrics: nil,
+            views: viewsDictionary))
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            vLayoutStr,
+            options: NSLayoutFormatOptions(rawValue: 0),
+            metrics: nil,
+            views: viewsDictionary))
+        self.view.addSubview(messageLabel)
+
+
+        // DatePicker生成
+        workStartTimeDatePicker = UIDatePicker()
+        workStartTimeDatePicker.timeZone = NSTimeZone.systemTimeZone()
+        workStartTimeDatePicker.datePickerMode = UIDatePickerMode.Time
+        workStartTimeDatePicker.date = NSUserDefaults.standardUserDefaults().objectForKey("workStartTime") as? NSDate ?? NSDate()
+
+        workStartTimeDatePicker.translatesAutoresizingMaskIntoConstraints = false
+        self.view.addSubview(workStartTimeDatePicker)
+        let dataPickerKey = "getDatePicker_layout"
+        (vLayoutStr, hLayoutStr) =
+            Utils().GenerateAutoLayoutString(
+                dataPickerKey,
+                pxHeight: 300,
+                pxRight: 30,
+                pxBottom: 100,
+                pxLeft: 30)
+        viewsDictionary[dataPickerKey] = workStartTimeDatePicker
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            hLayoutStr,
+            options: NSLayoutFormatOptions(rawValue: 0),
+            metrics: nil,
+            views: viewsDictionary))
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            vLayoutStr,
+            options: NSLayoutFormatOptions(rawValue: 0),
+            metrics: nil,
+            views: viewsDictionary))
+        self.view.addSubview(workStartTimeDatePicker)
+
+        // 設定完了ボタン生成
+        submitBtn = UIButton(frame: CGRect(x: 0, y: 0, width: 100, height: 60))
+        submitBtn.backgroundColor = UIColor.whiteColor()
+        submitBtn.layer.masksToBounds = true
+        submitBtn.layer.cornerRadius = 5.0
+        submitBtn.setTitle(submitBtnText, forState: UIControlState.Normal)
+        submitBtn.setTitleColor(UIColor.blackColor(), forState: UIControlState.Normal)
+        submitBtn.addTarget(self, action: #selector(ViewController.onClickSubmitBtn), forControlEvents: .TouchUpInside)
+        submitBtn.translatesAutoresizingMaskIntoConstraints = false
+        self.view.addSubview(submitBtn)
+        let getBtn2Key = "getBtn2_layout"
+        (vLayoutStr, hLayoutStr) =
+            Utils().GenerateAutoLayoutString(
+                getBtn2Key,
+                pxHeight: 60,
+                pxRight: 50,
+                pxBottom: 50,
+                pxLeft: 50)
+        viewsDictionary[getBtn2Key] = submitBtn
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            hLayoutStr,
+            options: NSLayoutFormatOptions(rawValue: 0),
+            metrics: nil,
+            views: viewsDictionary))
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat(
+            vLayoutStr,
+            options: NSLayoutFormatOptions(rawValue: 0),
+            metrics: nil,
+            views: viewsDictionary))
+        self.view.addSubview(submitBtn)
+    }
+
+    /// 設定完了ボタン押下時イベント
+    /// 入力値を現場開始時間として保存
+    func onClickSubmitBtn() {
+
+        messageLabel.hidden = true
+        workStartTimeDatePicker.hidden = true
+        submitBtn.hidden = true
+        effectView.hidden = true
+
+        // 選択した時間を保存する。
+        let formatter = NSDateFormatter()
+        formatter.locale = NSLocale(localeIdentifier: "ja_JP")
+        formatter.dateFormat = "HHmm"
+        let pickedDate = formatter.stringFromDate(workStartTimeDatePicker.date)
+        NSUserDefaults.standardUserDefaults().setObject(pickedDate, forKey:"workStartTime")
+
+        // ピンの位置を保存する。
+        NSUserDefaults.standardUserDefaults().setObject(appDelegate.targetLocation.latitude, forKey:"targetLatitudeKey")
+        NSUserDefaults.standardUserDefaults().setObject(appDelegate.targetLocation.longitude, forKey:"targetLongitudeKey")
+
+        // スヌーズをリセットする。
+        NSUserDefaults.standardUserDefaults().setObject(false, forKey:"isSnoozeOn")
+        NSUserDefaults.standardUserDefaults().setObject(true, forKey:"isSetAlerm")
+        NSUserDefaults.standardUserDefaults().setObject("20000101", forKey:"prevDoneDate")
+
+        NSUserDefaults.standardUserDefaults().synchronize()
+
+        // 位置情報取得開始
+        if appDelegate.timer == nil {
+            appDelegate.timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(ViewController.onUpdateLocation), userInfo: nil, repeats: true)
+        }
+    }
+
+    /// 地図にピンを配置する
     func dropPin(mapPoint: CLLocationCoordinate2D) {
 
         let annotation = MKPointAnnotation()
 
         annotation.coordinate  = mapPoint
-        annotation.title       = "現場"
+        annotation.title       = "workplace"
         annotation.subtitle    = ""
         self.mapView.removeAnnotations(self.mapView.annotations)
         self.mapView.addAnnotation(annotation)
 
-        // ピンの位置情報を保存
-        NSUserDefaults.standardUserDefaults().setObject(mapPoint.latitude, forKey:"targetLatitudeKey")
-        NSUserDefaults.standardUserDefaults().setObject(mapPoint.longitude, forKey:"targetLongitudeKey")
-        NSUserDefaults.standardUserDefaults().synchronize()
-
         appDelegate.targetLocation.latitude = mapPoint.latitude
         appDelegate.targetLocation.longitude = mapPoint.longitude
 
-        if appDelegate.timer == nil {
-            appDelegate.timer = NSTimer.scheduledTimerWithTimeInterval(5.0, target: self, selector: Selector("onUpdateLocation"), userInfo: nil, repeats: true)
-        }
-
     }
 
-    /* タイマーで呼び出される */
+    /// タイマーで呼び出される
     func onUpdateLocation() {
         if appDelegate.lm == nil {
             appDelegate.lm = CLLocationManager()
             appDelegate.lm.delegate = appDelegate
 
             appDelegate.lm.requestAlwaysAuthorization()
-
-            appDelegate.lm.startUpdatingLocation()
             appDelegate.lm.desiredAccuracy = kCLLocationAccuracyBest
             appDelegate.lm.activityType = CLActivityType.Fitness
+
+            appDelegate.lm.startUpdatingLocation()
         }
     }
 
-    /* 位置情報取得に成功したときに呼び出される */
+    /// 位置情報取得に成功したときに呼び出される
     func locationManager(manager: CLLocationManager, didUpdateToLocation newLocation: CLLocation, fromLocation oldLocation: CLLocation){
 
         let latitude = newLocation.coordinate.latitude
@@ -206,19 +380,20 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         let mapPoint:CLLocationCoordinate2D = CLLocationCoordinate2DMake(latitude,longitude)
         mapView.setCenterCoordinate(mapPoint, animated: false)
 
+        // 取得した位置へズームする。
         var zoom = mapView.region
         zoom.span.latitudeDelta = 0.005
         zoom.span.longitudeDelta = 0.005
         mapView.setRegion(zoom, animated: true)
         mapView.showsUserLocation = true
 
-        dropPin(mapPoint)
+        // dropPin(mapPoint)
 
         self.lm.stopUpdatingLocation()
         self.lm = nil
     }
 
-    /* 位置情報取得に失敗した時に呼び出される */
+    /// 位置情報取得に失敗した時に呼び出される
     func locationManager(manager: CLLocationManager, didFailWithError error: NSError) {
         print("error")
     }
